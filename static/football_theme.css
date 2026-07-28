@@ -1,0 +1,566 @@
+/* X-VARS 智能足球裁判系统 - 简约Ins风格样式 */
+
+/* ========== 全局样式 ========== */
+:root {
+    --ins-white: #ffffff;
+    --ins-light-gray: #f8f9fa;
+    --ins-gray: #e9ecef;
+    --ins-dark-gray: #6c757d;
+    --ins-black: #212529;
+    --ins-blue: #0d6efd;
+    --ins-blue-hover: #0b5ed7;
+    --ins-border: #dee2e6;
+    --ins-shadow: rgba(0, 0, 0, 0.08);
+    --ins-shadow-hover: rgba(0, 0, 0, 0.12);
+}
+
+/* 页面背景 - 简约白色 */
+.stApp {
+    background: var(--ins-light-gray) !important;
+    min-height: 100vh;
+}
+
+/* 主标题样式 - 简约风格 */
+h1 {
+    color: var(--ins-black) !important;
+    font-weight: 600 !important;
+    font-size: 2rem !important;
+    margin-bottom: 0.5rem !important;
+    letter-spacing: -0.5px;
+}
+
+/* 移除足球动画和图标 */
+h1::before {
+    display: none !important;
+}
+
+/* 副标题样式 */
+[data-testid="stCaptionContainer"] {
+    color: var(--ins-dark-gray) !important;
+    font-size: 0.95rem !important;
+    font-weight: 400 !important;
+}
+
+/* ========== 侧边栏美化 - 简约风格 ========== */
+[data-testid="stSidebar"] {
+    background: var(--ins-white) !important;
+    border-right: 1px solid var(--ins-border) !important;
+    box-shadow: none !important;
+}
+
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {
+    color: var(--ins-black) !important;
+    font-weight: 600 !important;
+    border-bottom: 1px solid var(--ins-border) !important;
+    padding-bottom: 0.75rem !important;
+    margin-bottom: 1rem !important;
+    font-size: 1.1rem !important;
+}
+
+/* 侧边栏文字颜色 */
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] .stMarkdown,
+[data-testid="stSidebar"] .stText {
+    color: var(--ins-black) !important;
+}
+
+/* 侧边栏按钮样式 - 简约风格 */
+[data-testid="stSidebar"] button {
+    background: var(--ins-white) !important;
+    color: var(--ins-black) !important;
+    border: 1px solid var(--ins-border) !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 1rem !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 2px var(--ins-shadow) !important;
+}
+
+/* 确保按钮内部所有文字和元素都是黑色 */
+[data-testid="stSidebar"] button,
+[data-testid="stSidebar"] button *,
+[data-testid="stSidebar"] button span,
+[data-testid="stSidebar"] button div {
+    color: var(--ins-black) !important;
+}
+
+[data-testid="stSidebar"] button:hover {
+    background: var(--ins-light-gray) !important;
+    border-color: var(--ins-dark-gray) !important;
+    box-shadow: 0 2px 4px var(--ins-shadow-hover) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* 侧边栏主要按钮 - 白色背景，清晰可读 */
+[data-testid="stSidebar"] button[kind="primary"] {
+    background: var(--ins-white) !important;
+    color: var(--ins-black) !important;
+    border: 2px solid var(--ins-blue) !important;
+    font-weight: 600 !important;
+}
+
+[data-testid="stSidebar"] button[kind="primary"] * {
+    color: var(--ins-black) !important;
+}
+
+[data-testid="stSidebar"] button[kind="primary"]:hover {
+    background: var(--ins-light-gray) !important;
+    border-color: var(--ins-blue-hover) !important;
+    color: var(--ins-black) !important;
+}
+
+[data-testid="stSidebar"] button[kind="primary"]:hover * {
+    color: var(--ins-black) !important;
+}
+
+/* 侧边栏次要按钮 */
+[data-testid="stSidebar"] button[kind="secondary"] {
+    background: var(--ins-white) !important;
+    color: var(--ins-black) !important;
+    border: 1px solid var(--ins-border) !important;
+}
+
+/* ========== 视频区域美化 - 简约风格 ========== */
+.video-container-wrapper {
+    margin-bottom: 1rem;
+}
+
+.video-title {
+    color: var(--ins-black);
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: var(--ins-white);
+    border-radius: 8px;
+    border: 1px solid var(--ins-border);
+}
+
+.video-container {
+    background: var(--ins-white);
+    border: 1px solid var(--ins-border);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px var(--ins-shadow);
+}
+
+video {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--ins-shadow);
+    background: var(--ins-black);
+    width: 100%;
+}
+
+/* ========== 对话框美化 - 简约风格 ========== */
+.chat-header-decoration {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    background: var(--ins-white);
+    border-radius: 8px;
+    border: 1px solid var(--ins-border);
+}
+
+.chat-icon {
+    font-size: 1.2rem;
+    /* 移除动画 */
+    animation: none !important;
+}
+
+.chat-title {
+    color: var(--ins-black);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+[data-testid="stChatMessageContainer"] {
+    background: var(--ins-white);
+    border: 1px solid var(--ins-border);
+    border-radius: 12px;
+    padding: 1rem;
+    min-height: 300px;
+}
+
+[data-testid="stChatMessage"] {
+    margin: 1rem 0;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 用户消息气泡 - 简约风格 */
+[data-testid="stChatMessage"][aria-label*="user"] {
+    background: var(--ins-light-gray);
+    color: var(--ins-black);
+    border-radius: 16px 16px 4px 16px;
+    padding: 0.75rem 1rem;
+    margin-left: auto;
+    max-width: 70%;
+    border: 1px solid var(--ins-border);
+}
+
+[data-testid="stChatMessage"][aria-label*="user"]::after {
+    display: none;
+}
+
+/* 助手消息气泡 - 简约风格 */
+[data-testid="stChatMessage"][aria-label*="assistant"] {
+    background: var(--ins-white);
+    color: var(--ins-black);
+    border-radius: 16px 16px 16px 4px;
+    padding: 0.75rem 1rem;
+    margin-right: auto;
+    max-width: 70%;
+    border: 1px solid var(--ins-border);
+    box-shadow: 0 1px 3px var(--ins-shadow);
+}
+
+[data-testid="stChatMessage"][aria-label*="assistant"]::before {
+    display: none;
+}
+
+/* 聊天输入框 - 简约风格 */
+[data-testid="stChatInput"] {
+    background: var(--ins-white) !important;
+    border: 1px solid var(--ins-border) !important;
+    border-radius: 24px !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.95rem !important;
+    box-shadow: 0 2px 4px var(--ins-shadow) !important;
+    transition: all 0.2s ease !important;
+}
+
+[data-testid="stChatInput"]:focus {
+    border-color: var(--ins-blue) !important;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1) !important;
+    outline: none !important;
+}
+
+/* ========== 快捷问题按钮区域 ========== */
+.quick-questions-section {
+    margin: 1.5rem 0 !important;
+    padding: 1rem !important;
+    background: var(--ins-white) !important;
+    border: 1px solid var(--ins-border) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px var(--ins-shadow) !important;
+}
+
+/* ========== 按钮美化 - 简约风格 ========== */
+.stButton > button {
+    background: var(--ins-white) !important;
+    color: var(--ins-black) !important;
+    border: 1px solid var(--ins-border) !important;
+    border-radius: 8px !important;
+    padding: 0.625rem 1.25rem !important;
+    font-weight: 500 !important;
+    font-size: 0.95rem !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 2px var(--ins-shadow) !important;
+    width: 100% !important;
+    min-height: 2.5rem !important;
+}
+
+/* 确保按钮内部所有文字和元素都是黑色 */
+.stButton > button,
+.stButton > button *,
+.stButton > button span,
+.stButton > button div {
+    color: var(--ins-black) !important;
+}
+
+.stButton > button:hover {
+    background: var(--ins-light-gray) !important;
+    border-color: var(--ins-dark-gray) !important;
+    box-shadow: 0 2px 4px var(--ins-shadow-hover) !important;
+    transform: translateY(-1px) !important;
+}
+
+.stButton > button[kind="primary"] {
+    background: var(--ins-white) !important;
+    color: var(--ins-black) !important;
+    border: 2px solid var(--ins-blue) !important;
+    font-weight: 600 !important;
+}
+
+.stButton > button[kind="primary"] * {
+    color: var(--ins-black) !important;
+}
+
+.stButton > button[kind="primary"]:hover {
+    background: var(--ins-light-gray) !important;
+    border-color: var(--ins-blue-hover) !important;
+    color: var(--ins-black) !important;
+}
+
+.stButton > button[kind="primary"]:hover * {
+    color: var(--ins-black) !important;
+}
+
+.stButton > button[kind="secondary"] {
+    background: var(--ins-white) !important;
+    color: var(--ins-black) !important;
+    border: 1px solid var(--ins-border) !important;
+}
+
+/* ========== 卡片和容器美化 - 简约风格 ========== */
+.stSuccess {
+    background: var(--ins-white) !important;
+    border: 1px solid #28a745 !important;
+    border-left: 4px solid #28a745 !important;
+    border-radius: 8px !important;
+    color: var(--ins-black) !important;
+    padding: 1rem !important;
+    box-shadow: 0 2px 4px var(--ins-shadow) !important;
+}
+
+.stInfo {
+    background: var(--ins-white) !important;
+    border: 1px solid var(--ins-blue) !important;
+    border-left: 4px solid var(--ins-blue) !important;
+    border-radius: 8px !important;
+    color: var(--ins-black) !important;
+    padding: 1rem !important;
+    box-shadow: 0 2px 4px var(--ins-shadow) !important;
+}
+
+.stWarning {
+    background: var(--ins-white) !important;
+    border: 1px solid #ffc107 !important;
+    border-left: 4px solid #ffc107 !important;
+    border-radius: 8px !important;
+    color: var(--ins-black) !important;
+    padding: 1rem !important;
+    box-shadow: 0 2px 4px var(--ins-shadow) !important;
+}
+
+.stError {
+    background: var(--ins-white) !important;
+    border: 1px solid #dc3545 !important;
+    border-left: 4px solid #dc3545 !important;
+    border-radius: 8px !important;
+    color: var(--ins-black) !important;
+    padding: 1rem !important;
+    box-shadow: 0 2px 4px var(--ins-shadow) !important;
+}
+
+/* ========== 输入框美化 - 简约风格 ========== */
+.stTextInput > div > div > input,
+.stNumberInput > div > div > input,
+.stSlider > div > div {
+    background: var(--ins-white) !important;
+    border: 1px solid var(--ins-border) !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0.75rem !important;
+    transition: all 0.2s ease !important;
+    color: var(--ins-black) !important;
+}
+
+.stTextInput > div > div > input:focus,
+.stNumberInput > div > div > input:focus {
+    border-color: var(--ins-blue) !important;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1) !important;
+    outline: none !important;
+}
+
+/* ========== 复选框和单选按钮 - 简约风格 ========== */
+.stCheckbox > label,
+.stRadio > label {
+    color: var(--ins-black) !important;
+    font-weight: 400 !important;
+}
+
+.stCheckbox > label > div:first-child,
+.stRadio > label > div:first-child {
+    border-color: var(--ins-border) !important;
+}
+
+.stCheckbox input:checked + div,
+.stRadio input:checked + div {
+    background-color: transparent !important;
+    border-color: var(--ins-border) !important;
+}
+
+/* ========== 选择框美化 - 简约风格 ========== */
+.stSelectbox > div > div > select {
+    background: var(--ins-white) !important;
+    border: 1px solid var(--ins-border) !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0.75rem !important;
+    color: var(--ins-black) !important;
+    font-weight: 400 !important;
+}
+
+.stSelectbox > div > div > select:focus {
+    border-color: var(--ins-blue) !important;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1) !important;
+    outline: none !important;
+}
+
+/* ========== 文件上传区域 - 简约风格 ========== */
+[data-testid="stFileUploader"] {
+    background: var(--ins-white) !important;
+    border: 2px dashed var(--ins-border) !important;
+    border-radius: 12px !important;
+    padding: 2rem !important;
+    text-align: center !important;
+    transition: all 0.2s ease !important;
+}
+
+[data-testid="stFileUploader"]:hover {
+    background: var(--ins-light-gray) !important;
+    border-color: var(--ins-blue) !important;
+    box-shadow: 0 2px 8px var(--ins-shadow) !important;
+}
+
+/* ========== 进度条美化 - 简约风格 ========== */
+.stProgress > div > div > div {
+    background: var(--ins-blue) !important;
+    border-radius: 4px !important;
+}
+
+.stProgress > div > div {
+    background: var(--ins-gray) !important;
+    border-radius: 4px !important;
+}
+
+/* ========== 展开/折叠区域 - 简约风格 ========== */
+[data-testid="stExpander"] {
+    background: var(--ins-white) !important;
+    border: 1px solid var(--ins-border) !important;
+    border-radius: 8px !important;
+    margin: 0.5rem 0 !important;
+}
+
+[data-testid="stExpander"] summary {
+    color: var(--ins-black) !important;
+    font-weight: 500 !important;
+    padding: 0.75rem !important;
+}
+
+[data-testid="stExpander"] summary:hover {
+    background: var(--ins-light-gray) !important;
+    border-radius: 8px !important;
+}
+
+/* ========== 滚动条美化 - 简约风格 ========== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--ins-light-gray);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--ins-dark-gray);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--ins-black);
+}
+
+/* ========== 主内容区域 ========== */
+[data-testid="stAppViewContainer"] {
+    background: var(--ins-light-gray) !important;
+}
+
+.main .block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+/* ========== 响应式设计 ========== */
+@media (max-width: 768px) {
+    .video-container {
+        padding: 0.75rem;
+    }
+    
+    [data-testid="stChatMessage"][aria-label*="user"],
+    [data-testid="stChatMessage"][aria-label*="assistant"] {
+        max-width: 85%;
+    }
+}
+
+/* ========== 移除足球相关动画效果 ========== */
+/* 移除旋转动画 */
+@keyframes rotate {
+    /* 已禁用 */
+}
+
+/* 移除弹跳动画 */
+@keyframes bounce {
+    /* 已禁用 */
+}
+
+/* 确保标题前没有旋转的足球图标 */
+h1::before {
+    display: none !important;
+    animation: none !important;
+}
+
+/* ========== 文字颜色优化 ========== */
+.stMarkdown,
+p,
+span,
+div {
+    color: var(--ins-black) !important;
+}
+
+/* 确保所有文字清晰可见 */
+[data-testid="stSidebar"] * {
+    color: var(--ins-black) !important;
+}
+
+/* 侧边栏滑块文字 */
+[data-testid="stSidebar"] .stSlider label {
+    color: var(--ins-black) !important;
+}
+
+/* 侧边栏数字输入框文字 */
+[data-testid="stSidebar"] .stNumberInput label {
+    color: var(--ins-black) !important;
+}
+
+/* 侧边栏复选框文字 */
+[data-testid="stSidebar"] .stCheckbox label {
+    color: var(--ins-black) !important;
+}
+
+/* 侧边栏选中状态 - 无背景色 */
+[data-testid="stSidebar"] .stCheckbox input:checked + div,
+[data-testid="stSidebar"] .stRadio input:checked + div {
+    background-color: transparent !important;
+    border-color: var(--ins-border) !important;
+}
+
+/* 侧边栏label选中状态 - 无背景色 */
+[data-testid="stSidebar"] .stCheckbox > label:has(input:checked),
+[data-testid="stSidebar"] .stRadio > label:has(input:checked) {
+    background-color: transparent !important;
+}
+
+/* 侧边栏所有选中元素的背景 */
+[data-testid="stSidebar"] *:focus,
+[data-testid="stSidebar"] *:active,
+[data-testid="stSidebar"] *:checked {
+    background-color: transparent !important;
+}

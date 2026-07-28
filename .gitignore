@@ -1,0 +1,87 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Virtual envs
+venv/
+env/
+ENV/
+.venv/
+
+# IDE / local tooling
+.vscode/
+.idea/
+.claude/
+.gitnexus/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs & runtime caches
+*.log
+*.cache
+chat_history/
+detailed_logs/
+analysis_results/
+rag_experiment_runs/
+experiment_runs/
+*.tmp
+*.bak
+
+# --- Large data (do not upload) ---
+dataset/
+data/videos/
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+
+# --- Model weights (download separately) ---
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.pth.tar
+*.ckpt
+*.onnx
+X-VARS/X-VARS_weights/*.safetensors
+visual_encoder/14_model.pth.tar
+visual_encoder/clip-vit-large-patch14/model.safetensors
+visual_encoder/clip-vit-large-patch14/*.bin
+
+# Vector store bulky artifacts (keep small .txt rule text)
+vector_store/*.pdf
+vector_store/*.pkl
+vector_store/embeddings.pkl
+
+# Large local docs / papers
+docs/**/*.pdf
+docs/**/*.zip
+*.pdf
+*.zip
+
+# Keep project markdown
+!README.md
+!docs/**/*.md
+!rag_experiment/**/*.md
+!experiment/**/*.md

@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# 虚拟环境
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 日志和缓存
+*.log
+*.cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 模型文件（从HuggingFace下载，不需要包含在镜像中）
+X-VARS/X-VARS_weights/
+X-VARS/tokenizer/
+visual_encoder/clip-vit-large-patch14/
+visual_encoder/14_model.pth.tar
+
+# 数据文件
+dataset/
+data/videos/
+*.mp4
+*.mov
+*.avi
+*.mkv
+
+# 生成的文件
+chat_history/
+detailed_logs/
+analysis_results/
+vector_store/embeddings.pkl
+
+# Git
+.git/
+.gitignore
+
+# 文档
+docs/
+*.md
+!README.md
+
+# 其他
+.DS_Store
+*.tmp
+*.bak
+
