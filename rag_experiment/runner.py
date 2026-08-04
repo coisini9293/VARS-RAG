@@ -47,9 +47,16 @@ from rag_experiment.plotting import (
     save_retrieval_empty_rate_bar,
 )
 from rag_experiment.presets import DEFAULT_LINES, LINE_PRESETS, LineSpec
+from rag_experiment.paper_features import (
+    PAPER_VIDEO_TOKEN_LEN,
+    encode_paper_video_features,
+)
+from rag_experiment.paper_prompt import DEFAULT_XVARS_CONV_MODE, build_xvars_prompt
 from rag_experiment.prompts import (
+    PAPER_Q_CARD,
+    PAPER_Q_FOUL,
     TASK_CLASSIFY_OFFENCE_SEVERITY,
-    build_user_question,
+    build_user_question_single,
     prompt_templates_for_log,
 )
 from rag_experiment.query_builder import build_retrieval_query
@@ -68,7 +75,7 @@ def _predict_greedy(
     temperature: float,
     max_new_tokens: int,
     do_sample: bool,
-    parse_fn,
+    parse_fn=None,
 ) -> tuple[str, str]:
     out = xv.model_generate_simple(
         model=model,
@@ -80,7 +87,67 @@ def _predict_greedy(
         do_sample=bool(do_sample),
         debug=False,
     )
-    return parse_fn(out), out
+    pred = parse_fn(out) if parse_fn is not None else out
+    return pred, out
+
+
+def _generate_paper_answers(
+    model,
+    tokenizer,
+    video_feat: torch.Tensor,
+    *,
+    clf_text: str,
+    rag_text: str,
+    video_token_len: int,
+    conv_mode: str,
+    temperature: float,
+    max_new_tokens: int,
+    do_sample: bool,
+    split_questions: bool,
+) -> tuple[str, str, str]:
+    """Returns (combined_raw, raw_foul, raw_card)."""
+    vlen = int(video_feat.shape[1])
+    if vlen != int(video_token_len):
+        raise ValueError(f"video_feat len {vlen} != video_token_len {video_token_len}")
+
+    if split_questions:
+        msg_foul = build_user_question_single(PAPER_Q_FOUL, rag_text, clf_text)
+        msg_card = build_user_question_single(PAPER_Q_CARD, rag_text, clf_text)
+        prompt_foul = build_xvars_prompt(msg_foul, video_token_len, conv_mode=conv_mode)
+        prompt_card = build_xvars_prompt(msg_card, video_token_len, conv_mode=conv_mode)
+        raw_foul = xv.model_generate_simple(
+            model=model,
+            tokenizer=tokenizer,
+            video_spatio_temporal_features=video_feat,
+            prompt=prompt_foul,
+            temperature=float(temperature),
+            max_new_tokens=int(max_new_tokens),
+            do_sample=bool(do_sample),
+        )
+        raw_card = xv.model_generate_simple(
+            model=model,
+            tokenizer=tokenizer,
+            video_spatio_temporal_features=video_feat,
+            prompt=prompt_card,
+            temperature=float(temperature),
+            max_new_tokens=int(max_new_tokens),
+            do_sample=bool(do_sample),
+        )
+        combined = f"{raw_foul.strip()}\n\n{raw_card.strip()}".strip()
+        return combined, raw_foul, raw_card
+
+    msg = build_user_question_single(TASK_CLASSIFY_OFFENCE_SEVERITY, rag_text, clf_text)
+    prompt = build_xvars_prompt(msg, video_token_len, conv_mode=conv_mode)
+    raw = xv.model_generate_simple(
+        model=model,
+        tokenizer=tokenizer,
+        video_spatio_temporal_features=video_feat,
+        prompt=prompt,
+        temperature=float(temperature),
+        max_new_tokens=int(max_new_tokens),
+        do_sample=bool(do_sample),
+    )
+    return raw, raw, ""
 
 
 def _write_line_settings(
@@ -107,6 +174,9 @@ def _write_line_settings(
             "use_clip_classifier": bool(args.use_clip_classifier),
             "clip_classifier_weights": args.clip_classifier_weights,
             "label_parse": args.label_parse,
+            "split_questions": bool(args.split_questions),
+            "conv_mode": args.conv_mode,
+            "paper_features": bool(args.paper_features),
         },
         "task_prompt": TASK_CLASSIFY_OFFENCE_SEVERITY,
         "prompt_templates": prompt_templates_for_log(),
@@ -124,14 +194,9 @@ def _write_line_settings(
         "notes": [
             "Labels follow X-VARS 4-way Offence+Severity (not legacy Between).",
             "Ground-truth Offence/Severity never used in retrieval queries.",
-            "R1 mirrors Streamlit production RAG (Top1 + ~200-char truncate).",
-            "Frames: foul-centered 8+8 @ ~3.0s (create_features convention); "
-            "annotation Timestamp is match-absolute ms and is not used for in-clip indexing.",
-            "CLIP classifier text (P_action / P_offence+severity) injected like custom_dataset.py.",
-            "Label parse: paper uses ChatGPT-3.5 to extract labels from free-form answers; "
-            "use --label-parse llm (DashScope Qwen via .env).",
-            "User questions are the paper pair: 'Is it a foul or not? Why?' + "
-            "'What card would you give? Why?' (classifier text prepended).",
+            "Paper-aligned inference: create_features frames 63-87, 300 video tokens (44+256).",
+            "Football conv template (xvars_football_v1) + split foul/card questions.",
+            "Label parse: LLM extract (paper: ChatGPT-3.5; default DashScope Qwen).",
         ],
     }
     with open(paths["settings"], "w", encoding="utf-8") as f:
@@ -149,7 +214,7 @@ def _sample_cache_key(item: EvalItem, args: argparse.Namespace) -> str:
     return (
         f"{item.action_id}/{item.clip_idx}|"
         f"{args.frame_sample}|f{args.max_frames}|t{args.foul_time_sec}|"
-        f"vt{args.video_token_len}"
+        f"vt{args.video_token_len}|pf{int(args.paper_features)}"
     )
 
 
@@ -180,8 +245,12 @@ def _encode_cached(
     )
     frame_meta_cache[key] = frame_meta
 
-    vf = encode_video_features(
-        frames, vision_tower_hf, clip_device, args.clip_bs, args.video_token_len
+    vf = (
+        encode_paper_video_features(frames, vision_tower_hf, clip_device, args.clip_bs)
+        if args.paper_features
+        else encode_video_features(
+            frames, vision_tower_hf, clip_device, args.clip_bs, args.video_token_len
+        )
     )
     feature_cache[key] = vf
 
@@ -204,41 +273,72 @@ def _run_one_sample(
     classifier_info: Optional[dict],
     use_clip_classifier: bool,
     parse_fn,
+    video_token_len: int,
+    conv_mode: str,
+    split_questions: bool,
 ) -> Dict[str, Any]:
     query = build_retrieval_query(spec.rag.query_mode, item.action_meta)
     ret = fetch_rag_context(rag, query, spec.rag)
     clf_text = ""
     if use_clip_classifier and classifier_info:
         clf_text = str(classifier_info.get("prompt_text", "") or "")
-    user_q = build_user_question(ret.text, classifier_text=clf_text)
-    full_prompt = xv.build_prompt(user_q, model, int(video_feat.shape[1]))
-    pred, raw = _predict_greedy(
+    rag_text = ret.text if spec.rag.enabled else ""
+
+    combined_raw, raw_foul, raw_card = _generate_paper_answers(
         model,
         tokenizer,
         video_feat,
-        full_prompt,
+        clf_text=clf_text,
+        rag_text=rag_text,
+        video_token_len=video_token_len,
+        conv_mode=conv_mode,
         temperature=spec.temperature,
         max_new_tokens=spec.max_new_tokens,
         do_sample=spec.do_sample,
-        parse_fn=parse_fn,
+        split_questions=split_questions,
     )
+    pred = parse_fn(combined_raw)
+
+    enhanced_foul = build_user_question_single(PAPER_Q_FOUL, rag_text, clf_text)
+    enhanced_card = build_user_question_single(PAPER_Q_CARD, rag_text, clf_text)
+
     return {
         "y_true": item.y_true,
         "y_pred": pred,
         "video": item.video_path,
-        "raw": raw,
+        "raw": combined_raw,
+        "raw_foul": raw_foul,
+        "raw_card": raw_card,
         "action_id": item.action_id,
         "clip_idx": item.clip_idx,
+        "camera_type": item.camera_type,
+        "original_question": TASK_CLASSIFY_OFFENCE_SEVERITY,
+        "paper_q_foul": PAPER_Q_FOUL,
+        "paper_q_card": PAPER_Q_CARD,
+        "classifier_text": clf_text,
         "retrieval_query": query if spec.rag.enabled else "",
+        "rag_context": rag_text,
+        "enhanced_question_foul": enhanced_foul,
+        "enhanced_question_card": enhanced_card,
+        "enhanced_question": (
+            f"[FOUL]\n{enhanced_foul}\n\n[CARD]\n{enhanced_card}"
+            if split_questions
+            else build_user_question_single(TASK_CLASSIFY_OFFENCE_SEVERITY, rag_text, clf_text)
+        ),
         "retrieval": {
+            "enabled": bool(spec.rag.enabled),
             "empty": ret.empty,
             "top1_score": ret.top1_score,
-            "context_chars": len(ret.text),
+            "context_chars": len(rag_text),
             "n_hits": len(ret.hits),
             "hits": ret.hits,
+            "search_mode": getattr(rag, "search_mode", None),
         },
         "classifier": classifier_info or {},
         "seed": seed,
+        "split_questions": split_questions,
+        "video_token_len": video_token_len,
+        "conv_mode": conv_mode,
     }
 
 
@@ -271,12 +371,12 @@ def run(argv: Optional[List[str]] = None) -> Dict[str, Any]:
     p.add_argument("--output-dir", default=os.path.join("rag_experiment_runs", "default"))
     p.add_argument("--lines", default=DEFAULT_LINES, help="Comma-separated, e.g. R0,R1,R3")
     p.add_argument("--max-action", type=int, default=300)
-    p.add_argument("--video-token-len", type=int, default=200)
+    p.add_argument("--video-token-len", type=int, default=PAPER_VIDEO_TOKEN_LEN)
     p.add_argument(
         "--max-frames",
         type=int,
         default=16,
-        help="Frames per clip (X-VARS paper uses 16 @ 224px)",
+        help="Frames per clip (paper create_features → 16 @ 224px)",
     )
     p.add_argument("--clip-bs", type=int, default=1)
     p.add_argument("--seed", type=int, default=42)
@@ -305,9 +405,9 @@ def run(argv: Optional[List[str]] = None) -> Dict[str, Any]:
     )
     p.add_argument(
         "--frame-sample",
-        default="foul_centered",
-        choices=["foul_centered", "uniform"],
-        help="foul_centered=8 before+8 after foul (~3s); uniform=even over whole clip",
+        default="paper_xvars",
+        choices=["paper_xvars", "foul_centered", "uniform"],
+        help="paper_xvars=create_features 63-87 @17fps; foul_centered=legacy 8+8 @3s",
     )
     p.add_argument(
         "--foul-time-sec",
@@ -330,9 +430,34 @@ def run(argv: Optional[List[str]] = None) -> Dict[str, Any]:
         "--label-parse",
         default="llm",
         choices=["rule", "llm", "hybrid"],
-        help="How to map free-form answers to 4-way labels (paper: ChatGPT extract → use llm)",
+        help="Map free-form answers to 4-way labels. Default llm (paper: ChatGPT extract via DashScope). rule=offline smoke only.",
+    )
+    p.add_argument(
+        "--paper-features",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Use create_features spatio-temporal encoding (44+256=300 tokens)",
+    )
+    p.add_argument(
+        "--split-questions",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Ask foul and card in two generations (paper Table 4 protocol)",
+    )
+    p.add_argument(
+        "--conv-mode",
+        default=DEFAULT_XVARS_CONV_MODE,
+        help="Conversation template (default: xvars_football_v1)",
     )
     args = p.parse_args(argv)
+
+    if args.paper_features and int(args.video_token_len) != PAPER_VIDEO_TOKEN_LEN:
+        print(
+            f"[rag_experiment] paper_features on: override video_token_len "
+            f"{args.video_token_len} -> {PAPER_VIDEO_TOKEN_LEN}",
+            flush=True,
+        )
+        args.video_token_len = PAPER_VIDEO_TOKEN_LEN
 
     os.makedirs(args.output_dir, exist_ok=True)
     lines = [x.strip() for x in args.lines.split(",") if x.strip()]
@@ -378,7 +503,8 @@ def run(argv: Optional[List[str]] = None) -> Dict[str, Any]:
 
     print(
         f"[rag_experiment] frame_sample={args.frame_sample} "
-        f"foul_time_sec={args.foul_time_sec} max_frames={args.max_frames} "
+        f"video_token_len={args.video_token_len} paper_features={args.paper_features} "
+        f"split_questions={args.split_questions} conv_mode={args.conv_mode} "
         f"label_parse={args.label_parse}",
         flush=True,
     )
@@ -444,6 +570,9 @@ def run(argv: Optional[List[str]] = None) -> Dict[str, Any]:
                         classifier_info=clf_cache.get(skey),
                         use_clip_classifier=bool(args.use_clip_classifier),
                         parse_fn=parse_fn,
+                        video_token_len=int(args.video_token_len),
+                        conv_mode=str(args.conv_mode),
+                        split_questions=bool(args.split_questions),
                     )
                     rec["frame_sample"] = frame_meta_cache.get(skey, {})
                     line_ck[ckey] = rec
@@ -542,6 +671,14 @@ def run(argv: Optional[List[str]] = None) -> Dict[str, Any]:
     )
     write_analysis_json(analysis, sp["report_json"])
     write_report_markdown(analysis, sp["report_md"])
+
+    try:
+        from rag_experiment.analyze_rag_cn import write_chinese_rag_analysis
+
+        cn_path = write_chinese_rag_analysis(args.output_dir)
+        print(f"Chinese RAG analysis: {cn_path}", flush=True)
+    except Exception as e:
+        print(f"[WARN] Chinese RAG analysis failed: {e}", flush=True)
 
     print("\n=== RAG Experiment Summary ===", flush=True)
     for lk in lines:

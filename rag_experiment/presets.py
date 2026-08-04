@@ -34,8 +34,9 @@ RAG_OFF = RagSettings(False, 0, 0, None, 0, "fixed")
 # Matches current Streamlit generate_answer: search top_k=3, use Top1, truncate ~200
 RAG_BASE = RagSettings(True, 3, 1, 200, 800, "fixed")
 RAG_TOPK = RagSettings(True, 3, 3, 200, 800, "fixed")
-RAG_DEEP = RagSettings(True, 3, 3, None, 2500, "fixed")
-RAG_ADAPTIVE = RagSettings(True, 3, 3, None, 2500, "adaptive")
+# 中文规则 token 密度高；2500 字常使总 prompt >2048 导致空生成。预算压到 ~900。
+RAG_DEEP = RagSettings(True, 3, 3, None, 900, "fixed")
+RAG_ADAPTIVE = RagSettings(True, 3, 3, None, 900, "adaptive")
 
 LINE_PRESETS: Dict[str, LineSpec] = {
     "R0": LineSpec(

@@ -43,9 +43,11 @@ All lines share the same classification prompt and decoding settings so the comp
 | Unit | `--unit action` (≈248 Test actions after skip; not 706 multi-view clips) |
 | Camera | Prefer `Main camera center` |
 | Metrics | Accuracy, **Balanced Accuracy**, Macro-F1, parse rate |
-| Frames | `--frame-sample foul_centered`：犯规前后各 8 帧（中心默认 3.0s） |
-| Questions | 论文原问：`Is it a foul or not? Why?` + `What card would you give? Why?` |
-| Classifier text | `--use-clip-classifier`：在问题前注入 `14_model.pth.tar` 的 P_foul/P_sev 文本 |
+| Frames | `--frame-sample paper_xvars`：63–87 @25fps → 16 帧 @17fps（`create_features` 同款） |
+| Video tokens | **300**（44 时序 + 256 空间，`--paper-features`） |
+| Conv template | `xvars_football_v1`（足球裁判助手） |
+| Questions | 分问 foul / card（`--split-questions`，两次生成） |
+| Label parse | `--label-parse llm`（Qwen，对齐论文 ChatGPT-3.5 抽标签） |
 
 ## How to run
 
@@ -71,9 +73,13 @@ python -m rag_experiment --output-dir rag_experiment_runs/run1 --lines R0,R1,R3
 | `--max-action` | `300` | Max action id (inclusive scan) |
 | `--lines` | `R0,R1,R2,R3,R4` | Which lines to run |
 | `--output-dir` | `rag_experiment_runs/default` | Run root (resume-safe) |
-| `--video-token-len` | `200` | Visual tokens |
+| `--video-token-len` | `300` | Visual tokens (paper: 44+256) |
 | `--max-frames` | `16` | Frames per clip (paper uses 16) |
-| `--frame-sample` | `foul_centered` | `foul_centered` (8+8) or `uniform` |
+| `--frame-sample` | `paper_xvars` | `paper_xvars` (create_features) or `foul_centered` / `uniform` |
+| `--paper-features` / `--no-paper-features` | on | Paper spatio-temporal feature encoding |
+| `--split-questions` / `--no-split-questions` | on | Separate foul + card generation |
+| `--conv-mode` | `xvars_football_v1` | Conversation template |
+| `--label-parse` | `llm` | `llm` (Qwen) or `rule` |
 | `--foul-time-sec` | `3.0` | In-clip foul center (create_features convention) |
 | `--use-clip-classifier` / `--no-use-clip-classifier` | on | Inject CLIP prediction text into LLM prompt |
 | `--clip-classifier-weights` | `visual_encoder/14_model.pth.tar` | Classifier checkpoint |
@@ -98,7 +104,7 @@ rag_experiment_runs/<run>/
   R0/ … R4/
     experiment_settings.json
     checkpoint.json
-    logs/predictions.jsonl      # y_true, y_pred, raw, retrieval hits
+    logs/predictions.jsonl      # y_true, y_pred, raw, raw_foul, raw_card, retrieval hits
     plots/confusion_matrix.png  # English labels
     plots/metrics_line.json
     plots/retrieval_stats.json  # RAG lines only

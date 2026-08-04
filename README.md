@@ -56,6 +56,8 @@ streamlit run x_vars_demo_with_streamlit.py
 
 主要依赖见 `requirements.txt`（`torch`、`transformers`、`decord`、`streamlit`、`sentence-transformers` 等）。程序入口处会设置 `TRANSFORMERS_NO_TF`、`TRANSFORMERS_NO_FLAX` 等，减少 TensorFlow/Flax 冲突。
 
+**重要：`transformers` 必须用 4.x（`>=4.38.2,<5.0`）。** 5.x 的 Llama API 与本仓库 `VideoChatGPT` 不兼容，会出现「无论问什么都生成无关 Python 代码」的现象。推荐：`pip install 'transformers==4.44.2'`。
+
 ---
 
 ## 本地须准备的文件
@@ -319,11 +321,17 @@ python test.py --output-dir experiment_runs/run1 --lines L0,L1,L2
 降低采样帧数、`Video token len`、CLIP batch；必要时将 CLIP 切到 CPU。
 
 **RAG 无法初始化 / 看起来有结果但其实是关键词匹配**  
-确认 `vector_store/2023-2024中文版足球規則.txt` 与 `embeddings.pkl` 存在，且已安装 `sentence-transformers`。若 RAG 设备选 CUDA 而向量缓存在 CPU，旧版会静默回退到文本匹配；当前代码会在加载/检索时自动对齐设备。界面「系统状态」里应显示检索模式为「向量搜索」。
+确认 `vector_store/2023-2024中文版足球規則.txt` 与 `embeddings.pkl` 存在，且已安装 `sentence-transformers`。若 RAG 设备选 CUDA 而向量缓存在 CPU，旧版会静默回退到文本匹配；当前代码会在加载/检索时自动对齐设备。界面「系统状态」里应显示检索模式为「向量搜索」。无公网不可达时请设 `HF_HUB_OFFLINE=1`（或开 VPN），否则编码器加载失败会退回关键词匹配。
+
+**`tee: .../xxx.log: No such file or directory`**  
+`tee` / 重定向在 Python 创建输出目录之前就会写文件。先执行：`mkdir -p rag_experiment_runs/smoke_check`（或你的 `--output-dir` 父目录），再跑实验。
 
 **CLIP 分类头 `14_model.pth.tar` 好像没加载**  
 这是**可选**辅助分类头，主对话 / RAG 实验默认 `load_clip_classifier=False`，不加载也能正常跑 X-VARS+RAG；文件存在但不等于当前主流程在用。
 
 **CUDA 相关报错（Windows）**  
 安装与显卡驱动匹配的 PyTorch CUDA 版本；无 GPU 时安装 CPU 版 PyTorch 并在界面中选择 CPU。
+
+**四分类预测塌缩成「Offence + No card」**  
+已做全链路排查（见 `rag_experiment_runs/diag_collapse/排查报告.md`）。主因是生成模型几乎从不回答牌色，规则解析再把含 `foul` 的句子默认成无牌；不是标注映射错误，也不是权重未加载。关 CLIP / 强制 Final 格式的小样本对照仍不说 yellow/red。
 

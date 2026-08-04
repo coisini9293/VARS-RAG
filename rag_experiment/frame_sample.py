@@ -16,6 +16,29 @@ from decord import VideoReader, cpu
 from decord import bridge as decord_bridge
 
 
+def paper_xvars_indices(
+    total_frames: int,
+    *,
+    start_frame: int = 63,
+    end_frame: int = 87,
+    source_fps: float = 25.0,
+    target_fps: float = 17.0,
+) -> List[int]:
+    """
+    Frame indices used by ``visual_encoder/create_features.py`` (63–87 @ 25fps,
+    subsampled to ~17fps → 16 frames).
+    """
+    if total_frames <= 0:
+        return []
+    start = min(int(start_frame), max(0, total_frames - 1))
+    end = min(int(end_frame), total_frames)
+    if end <= start:
+        return foul_centered_indices(total_frames, fps=source_fps, foul_time_sec=3.0)
+    window = end - start
+    factor = window / ((window / float(source_fps)) * float(target_fps))
+    return [start + j for j in range(window) if j % factor < 1]
+
+
 def foul_centered_indices(
     total_frames: int,
     *,
@@ -110,8 +133,10 @@ def load_frames_tensor(
     if fps <= 1e-6:
         fps = 25.0
 
-    mode = (mode or "foul_centered").strip().lower()
-    if mode in ("foul_centered", "paper_8_8", "8_8"):
+    mode = (mode or "paper_xvars").strip().lower()
+    if mode in ("paper_xvars", "paper", "create_features", "xvars"):
+        idx = paper_xvars_indices(total, source_fps=fps)
+    elif mode in ("foul_centered", "paper_8_8", "8_8"):
         # Paper: 8 before + 8 after. If max_frames != 16, split evenly.
         if int(max_frames) != int(n_before + n_after):
             half = int(max_frames) // 2

@@ -259,15 +259,21 @@ def initialize_model(
     # 设置使用开始和结束标记用于视频
     mm_use_vid_start_end = True
 
-    # 添加标记到tokenizer
+    # 添加标记到tokenizer（权重已按 vocab_size=32006 保存，不可缩小嵌入）
     tokenizer.add_tokens([DEFAULT_VIDEO_PATCH_TOKEN], special_tokens=True)
     if mm_use_vid_start_end:
         tokenizer.add_tokens([DEFAULT_VID_START_TOKEN, DEFAULT_VID_END_TOKEN], special_tokens=True)
 
-    # 调整模型token嵌入的大小
+    # 仅在 tokenizer 大于当前嵌入时扩展；缩小会截断已训练的特殊 token 行
     t0 = time.time()
-    model.resize_token_embeddings(len(tokenizer))
-    logger.info(f"[init] 调整 token 嵌入大小完成 | new_vocab={len(tokenizer)} | elapsed={time.time()-t0:.2f}s")
+    emb_rows = model.get_input_embeddings().weight.shape[0]
+    target_vocab = max(len(tokenizer), emb_rows)
+    if target_vocab != emb_rows:
+        model.resize_token_embeddings(target_vocab)
+    logger.info(
+        f"[init] token 嵌入对齐完成 | tokenizer={len(tokenizer)} emb={model.get_input_embeddings().weight.shape[0]} "
+        f"| elapsed={time.time()-t0:.2f}s"
+    )
 
     # 从投影路径加载权重，在调整token嵌入大小后
     if projection_path:

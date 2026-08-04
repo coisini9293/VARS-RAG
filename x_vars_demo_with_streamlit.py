@@ -94,8 +94,8 @@ LOCAL_CLIP_DIR = os.path.join("visual_encoder", "clip-vit-large-patch14")  # CLI
 CLIP_CLASSIFIER_WEIGHTS = os.path.join("visual_encoder", "14_model.pth.tar")  # CLIP分类头权重文件
 
 # 对话配置
-DEFAULT_CONV_MODE = "video-chatgpt_v1"  # 默认对话模式
-DEFAULT_VIDEO_TOKEN_LEN = 300  # 默认视频token长度，与项目Demo对齐
+DEFAULT_CONV_MODE = "xvars_football_v1"  # 足球裁判专用（与 custom_dataset / 论文一致）
+DEFAULT_VIDEO_TOKEN_LEN = 300  # create_features: 44 temporal + 256 spatial
 
 # RAG 配置 - 简化版本
 VECTOR_STORE_DIR = "vector_store"  # 向量存储目录
@@ -1235,6 +1235,17 @@ def model_generate_simple(
     target_dtype = torch.float16 if device.type == "cuda" else torch.float32
     inputs = tokenizer([prompt])
     input_ids = torch.as_tensor(inputs.input_ids, device=device, dtype=torch.long)
+
+    # Llama 位置编码上限通常为 2048；超长 RAG 上下文会导致空输出/索引错误。
+    # 视频补丁 token 在序列尾部（靠近 ASSISTANT:），必须保留尾部。
+    max_pos = int(getattr(getattr(model, "config", None), "max_position_embeddings", 2048) or 2048)
+    if input_ids.shape[1] > max_pos:
+        keep_tail = min(320, max_pos // 2)
+        keep_head = max_pos - keep_tail
+        logger.warning(
+            f"[GEN] Prompt 超长 {input_ids.shape[1]}>{max_pos}，截断为 head={keep_head}+tail={keep_tail}"
+        )
+        input_ids = torch.cat([input_ids[:, :keep_head], input_ids[:, -keep_tail:]], dim=1)
     
     # 计算prompt长度
     prompt_length = input_ids.shape[1]
@@ -1634,11 +1645,18 @@ def process_clip_features(frames_tensor, clip_device, clip_bs, video_token_len):
     # 拼接特征
     frame_features = torch.cat(collected, dim=0)
 
-    # 转换为时空序列特征
-    video_spatio_temporal = make_video_features_from_clip_hidden(
-        frame_features.to(device=device, dtype=tgt_dtype), 
-        target_length=int(video_token_len)
-    )
+    # 转换为时空序列特征（300 tokens 时用论文 create_features 算法）
+    if int(video_token_len) == 300:
+        from rag_experiment.paper_features import paper_spatio_temporal_features
+
+        video_spatio_temporal = paper_spatio_temporal_features(
+            frame_features.to(device=device, dtype=tgt_dtype)
+        )
+    else:
+        video_spatio_temporal = make_video_features_from_clip_hidden(
+            frame_features.to(device=device, dtype=tgt_dtype),
+            target_length=int(video_token_len),
+        )
     
     # 保持与模型一致的数据类型
     video_spatio_temporal = video_spatio_temporal.to(device=device, dtype=tgt_dtype)

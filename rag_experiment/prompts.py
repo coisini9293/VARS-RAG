@@ -56,15 +56,20 @@ def attach_classifier_text(user_message: str, classifier_text: str) -> str:
 
 def build_user_question(rag_text: str, classifier_text: str = "") -> str:
     """
-    Assemble the user message (video tokens added later by ``build_prompt``).
-
-    Order (paper-aligned + optional RAG):
-      1) CLIP classifier prediction text  (<P_foul>/<P_sev>)
-      2) Paper questions (foul? + card?)
-      3) Optional retrieved Laws of the Game snippets (RAG)
+    Combined foul+card question (legacy single-pass). Prefer ``build_user_question_single``.
     """
     text = TASK_PAPER_FOUL_AND_CARD
     text = attach_classifier_text(text, classifier_text)
+    return attach_rag_block(text, rag_text)
+
+
+def build_user_question_single(
+    question: str,
+    rag_text: str = "",
+    classifier_text: str = "",
+) -> str:
+    """One paper question with optional classifier prefix and RAG rules."""
+    text = attach_classifier_text(question, classifier_text)
     return attach_rag_block(text, rag_text)
 
 
@@ -74,5 +79,6 @@ def prompt_templates_for_log() -> dict[str, str]:
         "paper_q_card": PAPER_Q_CARD,
         "task_paper_foul_and_card": TASK_PAPER_FOUL_AND_CARD,
         "rag_rules_header": RAG_RULES_HEADER,
-        "assembly_order": "classifier_text -> paper_questions -> rag_rules -> video_tokens",
+        "assembly_order": "classifier_text -> paper_question -> rag_rules -> video_tokens",
+        "inference_mode": "split_questions (foul then card), paper 300 video tokens",
     }

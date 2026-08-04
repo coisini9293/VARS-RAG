@@ -51,13 +51,15 @@ def fetch_rag_context(
         merged = merged[: settings.max_context_chars]
 
     top1 = float(hits[0]["score"]) if hits and "score" in hits[0] else None
-    # Lightweight hit records for logging (truncate text for disk size)
+    # Hit records for analysis (keep enough text to inspect RAG quality)
     slim_hits = [
         {
+            "rank": i + 1,
             "score": float(h.get("score", 0.0)),
-            "text_preview": str(h.get("text", ""))[:160],
+            "text": str(h.get("text", "")),
+            "text_preview": str(h.get("text", ""))[:240],
             "text_len": len(str(h.get("text", ""))),
         }
-        for h in use
+        for i, h in enumerate(use)
     ]
     return RetrievalResult(merged, slim_hits, False, top1)
