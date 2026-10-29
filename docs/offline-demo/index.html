@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>X-VARS Intelligent Football Referee System</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2>Settings</h2>
+      </div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="enable-rag" checked />
+        <span>Enable football rule enhancement</span>
+      </label>
+
+      <div class="sidebar-section">
+        <h3>RAG System Details</h3>
+        <ul class="status-list">
+          <li><span class="ok">✅</span> Knowledge base exists</li>
+          <li><span class="ok">✅</span> Vector store exists</li>
+          <li>📚 Document segments: <strong>228</strong></li>
+          <li>💻 RAG device: <strong>cuda</strong></li>
+          <li>🔍 Search mode: <strong>vector search</strong></li>
+        </ul>
+
+        <div class="subblock">
+          <h4>Component status</h4>
+          <ul class="status-list">
+            <li><span class="ok">✅</span> Encoder available</li>
+            <li><span class="ok">✅</span> Embedding available</li>
+          </ul>
+        </div>
+
+        <div class="subblock">
+          <h4>Dependency checks</h4>
+          <ul class="status-list">
+            <li><span class="ok">✅</span> SentenceTransformers</li>
+            <li><span class="ok">✅</span> Similarity calculation available</li>
+          </ul>
+        </div>
+
+        <p class="note">Using vector search based on semantic similarity</p>
+        <p class="note muted">Optional: chat history can be auto-saved locally in this demo session.</p>
+
+        <label class="field-label" for="rag-device">RAG device</label>
+        <select id="rag-device" class="select">
+          <option value="cuda" selected>cuda</option>
+          <option value="cpu">cpu</option>
+        </select>
+      </div>
+
+      <div class="sidebar-footer">
+        <p class="muted small">Offline demo · No network · Relative assets</p>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <header class="page-header">
+        <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
+        <div>
+          <h1>⚽ X-VARS Intelligent Football Referee System</h1>
+          <p class="tagline">Concise Mode | Video Analysis + Rule Knowledge Base = Fast &amp; Precise Judgment!</p>
+        </div>
+      </header>
+
+      <!-- User Guide -->
+      <details class="panel guide">
+        <summary>📖 User Guide</summary>
+        <div class="guide-body">
+          <p><strong>Three steps to start:</strong></p>
+          <ol>
+            <li><strong>Select video</strong> — Use the preset example video (upload not required in this demo).</li>
+            <li><strong>Process video</strong> — Click <em>Process Video</em> once to extract frames/features.</li>
+            <li><strong>Ask questions</strong> — Use Quick Ask or type your own question in Intelligent Dialogue.</li>
+          </ol>
+          <p><strong>Tips:</strong> Clear Conversation resets chat; Export Conversation downloads a .txt transcript. RAG Retrieval Results appear after a disciplinary / rule-related answer.</p>
+        </div>
+      </details>
+
+      <!-- Video row -->
+      <section class="video-row">
+        <div class="card">
+          <h2>📹 Video Management</h2>
+          <div id="process-status" class="info-box">Use the example video, then click Process Video.</div>
+          <div id="metrics-card" class="metrics-card hidden">
+            <strong>Processing info:</strong> 16 frames, 0.6s
+          </div>
+
+          <div class="file-row">
+            <span class="file-chip" title="Preset example video">📎 clip_1.mp4 <span class="muted">(424.6 KB)</span></span>
+          </div>
+
+          <label class="checkbox-row">
+            <input type="checkbox" id="use-example" checked />
+            <span>Use example video</span>
+          </label>
+
+          <label class="field-label muted">Upload (disabled in offline demo)</label>
+          <input type="file" disabled accept="video/*" class="file-disabled" />
+
+          <button type="button" id="btn-process" class="btn btn-primary">🚀 Process Video</button>
+          <div id="process-spinner" class="spinner-row hidden">
+            <span class="spinner"></span>
+            <span>Processing video…</span>
+          </div>
+          <div id="process-success" class="success-box hidden"></div>
+        </div>
+
+        <div class="card">
+          <h2>📺 Video Preview</h2>
+          <div class="video-wrap">
+            <video id="video-player" controls playsinline preload="metadata" src="assets/clip_1.mp4">
+              Your browser does not support HTML5 video.
+            </video>
+          </div>
+          <p class="muted small">Selected: <strong>clip_1.mp4</strong> · ~5s clip</p>
+        </div>
+      </section>
+
+      <!-- Tabs -->
+      <section class="card tabs-card">
+        <div class="tab-bar" role="tablist">
+          <button type="button" class="tab active" data-tab="dialogue" role="tab" aria-selected="true">💬 Intelligent Dialogue</button>
+          <button type="button" class="tab" data-tab="rag" role="tab" aria-selected="false">📚 RAG Retrieval Results</button>
+          <button type="button" class="tab" data-tab="status" role="tab" aria-selected="false">📊 System Status</button>
+        </div>
+
+        <!-- Dialogue tab -->
+        <div class="tab-panel active" id="panel-dialogue" role="tabpanel">
+          <div id="chat-log" class="chat-log" aria-live="polite"></div>
+
+          <div id="quick-asks" class="quick-asks hidden">
+            <p class="quick-label"><strong>🎯 Quick Ask</strong> <span class="muted">— combines FIFA Laws of the Game knowledge base</span></p>
+            <div class="quick-grid">
+              <button type="button" class="btn btn-quick" data-q="scene">⚽ Scene Analysis</button>
+              <button type="button" class="btn btn-quick" data-q="disciplinary">🟨 Disciplinary</button>
+              <button type="button" class="btn btn-quick" data-q="conduct">👥 Player Conduct</button>
+              <button type="button" class="btn btn-quick" data-q="rule">📋 Rule Explanation</button>
+              <button type="button" class="btn btn-quick" data-q="basis">⚖️ Rule Basis</button>
+              <button type="button" class="btn btn-quick" data-q="detail">🔍 Detail Analysis</button>
+            </div>
+          </div>
+
+          <div id="thinking" class="spinner-row hidden">
+            <span class="spinner"></span>
+            <span>Thinking…</span>
+          </div>
+
+          <form id="chat-form" class="chat-form">
+            <input type="text" id="chat-input" placeholder="Type your question… (process video first)" autocomplete="off" disabled />
+            <button type="submit" id="btn-send" class="btn btn-primary" disabled>Send</button>
+          </form>
+
+          <div class="chat-actions">
+            <button type="button" id="btn-clear" class="btn btn-secondary" disabled>🗑️ Clear Conversation</button>
+            <button type="button" id="btn-export" class="btn btn-secondary" disabled>📥 Export Conversation</button>
+          </div>
+        </div>
+
+        <!-- RAG tab -->
+        <div class="tab-panel" id="panel-rag" role="tabpanel" hidden>
+          <div id="rag-empty" class="info-box">No retrieval results yet. Ask a disciplinary / rule question after processing the video.</div>
+          <div id="rag-results" class="hidden">
+            <p class="muted small">Top snippets from Laws of the Game (simulated offline retrieval)</p>
+            <div class="table-wrap">
+              <table class="rag-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Source</th>
+                    <th>Snippet</th>
+                    <th>Similarity</th>
+                  </tr>
+                </thead>
+                <tbody id="rag-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status tab -->
+        <div class="tab-panel" id="panel-status" role="tabpanel" hidden>
+          <div class="status-grid">
+            <div class="stat-card">
+              <div class="stat-label">Video Frames</div>
+              <div class="stat-value" id="stat-frames">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Processing Time (s)</div>
+              <div class="stat-value" id="stat-time">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Feature Length</div>
+              <div class="stat-value" id="stat-feat">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">CLIP Device</div>
+              <div class="stat-value" id="stat-device">—</div>
+            </div>
+          </div>
+          <p class="muted small" id="status-hint">Process the video to populate system status.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
