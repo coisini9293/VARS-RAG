@@ -168,15 +168,15 @@
         <div class="tab-panel" id="panel-rag" role="tabpanel" hidden>
           <div id="rag-empty" class="info-box">No retrieval results yet. Ask a disciplinary / rule question after processing the video.</div>
           <div id="rag-results" class="hidden">
-            <p class="muted small">Top snippets from Laws of the Game (simulated offline retrieval)</p>
+            <h3 class="rag-heading">Most Recent RAG Retrieval</h3>
+            <p class="rag-query" id="rag-query"></p>
             <div class="table-wrap">
               <table class="rag-table">
                 <thead>
                   <tr>
-                    <th>#</th>
-                    <th>Source</th>
-                    <th>Snippet</th>
-                    <th>Similarity</th>
+                    <th>rank</th>
+                    <th>score</th>
+                    <th>snippet</th>
                   </tr>
                 </thead>
                 <tbody id="rag-tbody"></tbody>
@@ -210,6 +210,9 @@
       </section>
     </main>
   </div>
+  <footer class="demo-banner" role="note">
+    <strong>Demo only</strong> — This is a scripted offline preview of X-VARS. Answers and RAG hits are pre-recorded; there is no live model or knowledge-base backend.
+  </footer>
   <script src="app.js"></script>
 </body>
 </html>
