@@ -611,3 +611,30 @@ select {
     max-width: 1180px;
   }
 }
+
+
+.rag-heading {
+  margin: 0 0 0.4rem;
+  font-size: 1.05rem;
+}
+
+.rag-query {
+  margin: 0 0 0.75rem;
+  font-size: 0.92rem;
+  color: var(--muted);
+  word-break: break-word;
+}
+
+.demo-banner {
+  margin: 0;
+  padding: 0.85rem 1.25rem 1.25rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #5c4a00;
+  background: #fff8e1;
+  border-top: 1px solid #f0e0a0;
+}
+
+.demo-banner strong {
+  color: #7a5c00;
+}

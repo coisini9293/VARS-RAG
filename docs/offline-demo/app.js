@@ -53,24 +53,27 @@
     },
   };
 
+  const RAG_QUERY =
+    "football foul rules direct free kick careless reckless excessive force tackle holding pushing";
+
   const RAG_SNIPPETS = [
     {
-      source: "IFAB Laws of the Game — Law 12",
+      rank: 1,
+      score: "1.5",
       snippet:
-        "A tackle or challenge that endangers the safety of an opponent must be sanctioned as serious foul play. Careless is when a player shows a lack of attention or consideration; no further disciplinary action is needed beyond the free kick.",
-      score: 0.91,
+        "Page 109 — 109 Laws of the Game 2025/26 | Law 12 | Fouls and Misconduct Direct and indirect free kicks and penalty kicks can or...",
     },
     {
-      source: "IFAB Laws of the Game — Law 12 (Reckless)",
+      rank: 2,
+      score: "1.3538",
       snippet:
-        "Reckless is when a player acts with disregard to the danger to, or consequences for, an opponent and must be cautioned (yellow card). Contact without a genuine attempt to play the ball often falls into this category.",
-      score: 0.87,
+        "Page 126 — 126 free kicks for offences involving a player entering, re-entering or leaving the field of play without permission are...",
     },
     {
-      source: "IFAB Laws of the Game — Disciplinary action",
+      rank: 3,
+      score: "1.2923",
       snippet:
-        "A player must be cautioned for a reckless challenge. Medium-intensity contact on an opponent's leg when not playing the ball is a typical example where a yellow card is warranted.",
-      score: 0.82,
+        "Page 118 — 118 A player, substitute or substituted player who has been sent off must leave the vicinity of the field of play and the...",
     },
   ];
 
@@ -102,6 +105,7 @@
     btnExport: document.getElementById("btn-export"),
     ragEmpty: document.getElementById("rag-empty"),
     ragResults: document.getElementById("rag-results"),
+    ragQuery: document.getElementById("rag-query"),
     ragTbody: document.getElementById("rag-tbody"),
     statFrames: document.getElementById("stat-frames"),
     statTime: document.getElementById("stat-time"),
@@ -183,25 +187,29 @@
     updateActionButtons();
   }
 
-  function showRagResults() {
+  function showRagResults(switchToTab) {
+    if (el.ragQuery) {
+      el.ragQuery.textContent = "Query: " + RAG_QUERY;
+    }
     el.ragTbody.innerHTML = "";
-    RAG_SNIPPETS.forEach(function (row, i) {
+    RAG_SNIPPETS.forEach(function (row) {
       const tr = document.createElement("tr");
       tr.innerHTML =
         "<td>" +
-        (i + 1) +
+        row.rank +
         "</td><td>" +
-        escapeHtml(row.source) +
+        escapeHtml(row.score) +
         "</td><td>" +
         escapeHtml(row.snippet) +
-        "</td><td>" +
-        row.score.toFixed(2) +
         "</td>";
       el.ragTbody.appendChild(tr);
     });
     el.ragEmpty.classList.add("hidden");
     el.ragResults.classList.remove("hidden");
     state.showedRag = true;
+    if (switchToTab) {
+      switchTab("rag");
+    }
   }
 
   function escapeHtml(s) {
@@ -320,7 +328,7 @@
     renderChat();
 
     if (useRag) {
-      showRagResults();
+      showRagResults(true);
     }
   }
 
